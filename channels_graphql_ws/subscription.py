@@ -228,8 +228,6 @@ class Subscription(graphene.ObjectType):
         group = cls._group_name(group)
         group_send = asgiref.sync.async_to_sync(
             cls._channel_layer().group_send)
-        print('group send!')
-        print(serialized_payload)
         group_send(
             group=group,
             message={
