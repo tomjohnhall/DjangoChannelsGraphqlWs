@@ -159,6 +159,8 @@ class Subscription(graphene.ObjectType):
 
     @classmethod
     def broadcast(cls, *, group=None, payload=None):
+        print('BROADCAST')
+        print(payload)
         """Call this method to notify all subscriptions in the group.
 
         This method can be called from both synchronous and asynchronous
@@ -204,12 +206,13 @@ class Subscription(graphene.ObjectType):
 
         # Send the message to the Channels group.
         group = cls._group_name(group)
+
         group_send = cls._channel_layer().group_send
         await group_send(
             group=group,
             message={
                 "type": "broadcast",
-                "group": group,
+                "group": 'group42',
                 "payload": serialized_payload,
             },
         )
@@ -223,12 +226,15 @@ class Subscription(graphene.ObjectType):
 
         # Send the message to the Channels group.
         group = cls._group_name(group)
-        group_send = asgiref.sync.async_to_sync(cls._channel_layer().group_send)
+        group_send = asgiref.sync.async_to_sync(
+            cls._channel_layer().group_send)
+        print('group send!')
+        print(serialized_payload)
         group_send(
             group=group,
             message={
                 "type": "broadcast",
-                "group": group,
+                "group": 'test',
                 "payload": serialized_payload,
             },
         )
@@ -278,8 +284,10 @@ class Subscription(graphene.ObjectType):
         """Unsubscribe, synchronous version."""
         # Send the message to the Channels group.
         group = cls._group_name(group)
-        group_send = asgiref.sync.async_to_sync(cls._channel_layer().group_send)
-        group_send(group=group, message={"type": "unsubscribe", "group": group})
+        group_send = asgiref.sync.async_to_sync(
+            cls._channel_layer().group_send)
+        group_send(group=group, message={
+                   "type": "unsubscribe", "group": group})
 
     @classmethod
     def Field(  # pylint: disable=invalid-name
@@ -376,8 +384,7 @@ class Subscription(graphene.ObjectType):
         """
         # Extract function which associates the callback with the groups
         # and bring real root back.
-        register_subscription = root.register_subscription
-        root = root.real_root
+        register_subscription = info.context["register_subscription"]
 
         # Attach current subscription to the group corresponding to the
         # concrete class. This allows to trigger all the subscriptions
@@ -388,7 +395,10 @@ class Subscription(graphene.ObjectType):
         # Invoke the subclass-specified `subscribe` method to get the
         # groups subscription must be attached to.
         if cls._meta.subscribe is not None:
+            print('subclass groups')
+
             subclass_groups = cls._meta.subscribe(root, info, *args, **kwds)
+            print(subclass_groups)
             # Properly handle `async def subscribe`.
             if asyncio.iscoroutinefunction(cls._meta.subscribe):
                 subclass_groups = asyncio.get_event_loop().run_until_complete(
@@ -411,6 +421,7 @@ class Subscription(graphene.ObjectType):
         # be returned from here, cause that is what GraphQL expects from
         # the subscription "resolver" functions.
         def publish_callback(payload):
+            print("Publish callback!")
             """Call `publish` with the payload."""
             result = cls._meta.publish(payload, info, *args, **kwds)
             # Properly handle `async def publish`.
