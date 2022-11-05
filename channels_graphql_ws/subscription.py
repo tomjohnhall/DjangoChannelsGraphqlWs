@@ -223,7 +223,8 @@ class Subscription(graphene.ObjectType):
 
         # Send the message to the Channels group.
         group = cls._group_name(group)
-        group_send = asgiref.sync.async_to_sync(cls._channel_layer().group_send)
+        group_send = asgiref.sync.async_to_sync(
+            cls._channel_layer().group_send)
         group_send(
             group=group,
             message={
@@ -278,8 +279,10 @@ class Subscription(graphene.ObjectType):
         """Unsubscribe, synchronous version."""
         # Send the message to the Channels group.
         group = cls._group_name(group)
-        group_send = asgiref.sync.async_to_sync(cls._channel_layer().group_send)
-        group_send(group=group, message={"type": "unsubscribe", "group": group})
+        group_send = asgiref.sync.async_to_sync(
+            cls._channel_layer().group_send)
+        group_send(group=group, message={
+                   "type": "unsubscribe", "group": group})
 
     @classmethod
     def Field(  # pylint: disable=invalid-name
